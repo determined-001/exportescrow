@@ -7,6 +7,9 @@ const schema = z.object({
   NEXT_PUBLIC_PRIVY_APP_ID: z.string().default(''),
   NEXT_PUBLIC_SUPABASE_URL: z.string().default(''),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().default(''),
+  SOLANA_RPC_URL: z.string().default(''),
+  USDC_MINT_ADDRESS: z.string().default(''),
+  FEE_PAYER_PRIVATE_KEY: z.string().default(''),
   PRIVY_APP_SECRET: z.string().default(''),
   SUPABASE_SERVICE_ROLE_KEY: z.string().default(''),
   KIRAPAY_API_KEY: z.string().default(''),
@@ -14,7 +17,6 @@ const schema = z.object({
   KIRAPAY_WEBHOOK_SECRET: z.string().default(''),
   PINATA_JWT: z.string().default(''),
   PINATA_GATEWAY: z.string().default(''),
-  PLATFORM_FEE_PAYER_PRIVATE_KEY: z.string().default(''),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -29,6 +31,9 @@ function loadEnv(): Env {
     NEXT_PUBLIC_PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    SOLANA_RPC_URL: process.env.SOLANA_RPC_URL,
+    USDC_MINT_ADDRESS: process.env.USDC_MINT_ADDRESS,
+    FEE_PAYER_PRIVATE_KEY: process.env.FEE_PAYER_PRIVATE_KEY,
     PRIVY_APP_SECRET: process.env.PRIVY_APP_SECRET,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     KIRAPAY_API_KEY: process.env.KIRAPAY_API_KEY,
@@ -36,7 +41,6 @@ function loadEnv(): Env {
     KIRAPAY_WEBHOOK_SECRET: process.env.KIRAPAY_WEBHOOK_SECRET,
     PINATA_JWT: process.env.PINATA_JWT,
     PINATA_GATEWAY: process.env.PINATA_GATEWAY,
-    PLATFORM_FEE_PAYER_PRIVATE_KEY: process.env.PLATFORM_FEE_PAYER_PRIVATE_KEY,
   });
 }
 
@@ -49,3 +53,11 @@ export function requireServerEnv<K extends keyof Env>(key: K): string {
   }
   return value as string;
 }
+
+// Server-side Solana config. RPC URL falls back to the public client URL so
+// scripts and API routes work out of the box on devnet; production should set
+// SOLANA_RPC_URL to a paid endpoint with higher rate limits.
+export const solanaServerConfig = {
+  rpcUrl: env.SOLANA_RPC_URL || env.NEXT_PUBLIC_SOLANA_RPC_URL,
+  usdcMint: env.USDC_MINT_ADDRESS || env.NEXT_PUBLIC_USDC_MINT,
+};

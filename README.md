@@ -133,6 +133,16 @@ End-to-end happy path on Solana devnet. Use throwaway devnet wallets only — **
 
 7. **Confirm release.** The Tron testnet wallet you set as the exporter address receives the routed payout from KIRAPAY ~30–60 seconds after release. Deal status is now `released`.
 
+## Verification
+
+The SPL multisig custody layer ships with an end-to-end devnet test that walks the full deposit → attest-quorum → release cycle:
+
+```bash
+npm run verify:multisig
+```
+
+The script creates a fresh test USDC mint, four fresh keypairs (importer + three verifiers), assembles a 3-of-4 SPL Token multisig, funds it with 1 USDC, builds a release transaction signed independently by 3 of the 4 signers, and asserts the funds land at the exporter address. See [`scripts/README.md`](./scripts/README.md) for the full description and how to provision the fee-payer keypair. If this script passes three runs in a row, the custody layer is ready; if it fails, fix before moving on.
+
 ## Submission Links
 
 - **Demo video:** TODO
