@@ -15,6 +15,7 @@ const schema = z.object({
   KIRAPAY_API_KEY: z.string().default(''),
   KIRAPAY_API_BASE_URL: z.string().default('https://api.kira-pay.com'),
   KIRAPAY_WEBHOOK_SECRET: z.string().default(''),
+  KIRAPAY_WEBHOOK_PUBLIC_URL: z.string().default(''),
   PINATA_JWT: z.string().default(''),
   PINATA_GATEWAY: z.string().default(''),
 });
@@ -39,6 +40,7 @@ function loadEnv(): Env {
     KIRAPAY_API_KEY: process.env.KIRAPAY_API_KEY,
     KIRAPAY_API_BASE_URL: process.env.KIRAPAY_API_BASE_URL,
     KIRAPAY_WEBHOOK_SECRET: process.env.KIRAPAY_WEBHOOK_SECRET,
+    KIRAPAY_WEBHOOK_PUBLIC_URL: process.env.KIRAPAY_WEBHOOK_PUBLIC_URL,
     PINATA_JWT: process.env.PINATA_JWT,
     PINATA_GATEWAY: process.env.PINATA_GATEWAY,
   });

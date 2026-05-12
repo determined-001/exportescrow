@@ -7,6 +7,8 @@ import { solanaServerConnection } from '@/lib/solana/connection';
 import { getFeePayerKeypair } from '@/lib/solana/keys';
 import { createDealMultisig } from '@/lib/solana/multisig';
 import { DEAL_STATUSES } from '@/lib/deal-state';
+import { createAndStorePaymentLink } from '@/lib/deals';
+import { KiraPayError } from '@/lib/kirapay/client';
 import type { Deal } from '@/types/deal';
 
 export const runtime = 'nodejs';
@@ -33,7 +35,15 @@ interface VerifierSetRow {
   verifiers: VerifierRow[];
 }
 
-export async function POST(req: Request): Promise<NextResponse<{ deal: Deal } | { error: string }>> {
+interface CreateDealSuccess {
+  deal: Deal;
+  payment_url: string | null;
+  warning?: string;
+}
+
+export async function POST(
+  req: Request,
+): Promise<NextResponse<CreateDealSuccess | { error: string }>> {
   let raw: unknown;
   try {
     raw = await req.json();
@@ -161,7 +171,31 @@ export async function POST(req: Request): Promise<NextResponse<{ deal: Deal } | 
     console.error(`Event insert failed for deal ${dealRow.id}: ${eventErr.message}`);
   }
 
-  return NextResponse.json({ deal: dealRow as Deal });
+  // Chain payment link creation immediately after deal is persisted.
+  // If KIRAPAY fails, we return the deal anyway with payment_url=null —
+  // the multisig is non-custodial and can't be rolled back, and the frontend
+  // can retry via POST /api/kirapay/payment-link later.
+  const deal = dealRow as Deal;
+  let paymentUrl: string | null = null;
+  let warning: string | undefined;
+
+  try {
+    const linkResult = await createAndStorePaymentLink(deal, supabase);
+    paymentUrl = linkResult.paymentUrl;
+  } catch (err) {
+    const msg =
+      err instanceof KiraPayError
+        ? `KIRAPAY error [${err.code}]: ${err.message}`
+        : err instanceof Error
+          ? err.message
+          : String(err);
+    console.error(`Payment link creation failed for deal ${deal.id}: ${msg}`);
+    warning = `Payment link creation failed: ${msg}. Retry via POST /api/kirapay/payment-link.`;
+  }
+
+  const response: CreateDealSuccess = { deal, payment_url: paymentUrl };
+  if (warning) response.warning = warning;
+  return NextResponse.json(response);
 }
 
 const ListQuerySchema = z.object({

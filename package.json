@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "verify:multisig": "tsx scripts/verify-multisig.ts"
+    "verify:multisig": "tsx scripts/verify-multisig.ts",
+    "verify:kirapay-fundin": "tsx scripts/verify-kirapay-fundin.ts",
+    "verify:kirapay-fundin:mock": "tsx scripts/verify-kirapay-fundin.ts --mock"
   },
   "dependencies": {
     "@privy-io/react-auth": "^3.23.1",

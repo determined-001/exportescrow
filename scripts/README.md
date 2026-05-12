@@ -5,6 +5,8 @@ Operational scripts for ExportEscrow. Run with `npm run <script>` (preferred) or
 | Script | Command | Purpose |
 | --- | --- | --- |
 | `verify-multisig.ts` | `npm run verify:multisig` | End-to-end proof that the SPL multisig custody layer works on Solana devnet: create multisig, fund vault, 3-of-4 release. |
+| `verify-kirapay-fundin.ts` | `npm run verify:kirapay-fundin` | End-to-end proof that the KIRAPAY fund-in leg works: payment link creation, webhook delivery, HMAC verification, `created → funded` transition. |
+| `verify-kirapay-fundin.ts` | `npm run verify:kirapay-fundin:mock` | Same as above but with a synthetic webhook (no real KIRAPAY call). Requires `npm run dev` running locally. |
 | `seed-verifiers.ts` | `npx tsx scripts/seed-verifiers.ts` | Insert the default 2-of-3 verifier set into Supabase. *(stub)* |
 | `demo-deal.ts` | `npx tsx scripts/demo-deal.ts` | Walk a deal through the full happy path on Solana devnet. *(stub)* |
 

@@ -135,13 +135,43 @@ End-to-end happy path on Solana devnet. Use throwaway devnet wallets only — **
 
 ## Verification
 
-The SPL multisig custody layer ships with an end-to-end devnet test that walks the full deposit → attest-quorum → release cycle:
+### 1. SPL Multisig custody layer
+
+End-to-end devnet proof that the escrow custody primitive works — deposit, 3-of-4 quorum, release:
 
 ```bash
 npm run verify:multisig
 ```
 
-The script creates a fresh test USDC mint, four fresh keypairs (importer + three verifiers), assembles a 3-of-4 SPL Token multisig, funds it with 1 USDC, builds a release transaction signed independently by 3 of the 4 signers, and asserts the funds land at the exporter address. See [`scripts/README.md`](./scripts/README.md) for the full description and how to provision the fee-payer keypair. If this script passes three runs in a row, the custody layer is ready; if it fails, fix before moving on.
+The script creates a fresh test USDC mint, four fresh keypairs (importer + three verifiers), assembles a 3-of-4 SPL Token multisig, funds it with 1 USDC, builds a release transaction signed independently by 3 of the 4 signers, and asserts the funds land at the exporter address. See [`scripts/README.md`](./scripts/README.md) for the full description and how to provision the fee-payer keypair. Run three times in a row before declaring the custody layer ready.
+
+### 2. KIRAPAY fund-in leg
+
+End-to-end proof that KIRAPAY payment link creation, webhook delivery, HMAC verification, and the `created → funded` state transition all work.
+
+**Mock mode (no real KIRAPAY call — tests internal logic):**
+
+Prerequisites: `FEE_PAYER_PRIVATE_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`, `KIRAPAY_WEBHOOK_SECRET` set to any string, and `npm run dev` running in a second terminal.
+
+```bash
+npm run verify:kirapay-fundin:mock
+```
+
+This creates a real Solana devnet multisig, mints USDC directly to the vault (simulating KIRAPAY settlement), inserts a deal row in Supabase, then POSTs a HMAC-signed synthetic webhook to `localhost:3000/api/kirapay/webhook`. It also verifies that:
+- A duplicate delivery of the same event returns `{ duplicate: true }` without double-transitioning the deal.
+- A request with a wrong HMAC signature is rejected with HTTP 401.
+
+**Real mode (live KIRAPAY testnet):**
+
+Prerequisites: all of the above, plus `KIRAPAY_API_KEY`, `KIRAPAY_WEBHOOK_PUBLIC_URL` (your ngrok or Vercel preview URL), and a supported testnet wallet for paying.
+
+```bash
+npm run verify:kirapay-fundin
+```
+
+The script creates a payment link against the real KIRAPAY API, prints the payment URL, and waits for you to initiate a testnet payment. It polls the deal row every 5 seconds (5-minute timeout) and prints a summary table once the deal transitions to `funded`. Run twice consecutively to confirm it is not flaky.
+
+> **Note:** `docs.kira-pay.com` currently returns HTTP 403 for all WebFetch attempts from CI. API field names and endpoint paths are derived from `docs/KIRAPAY_INTEGRATION.md`. If the real API returns unexpected field names, the verification script will print the full error and stop cleanly. Update `src/lib/kirapay/payment-link.ts` to map to the actual field names.
 
 ## Submission Links
 
